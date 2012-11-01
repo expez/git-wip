@@ -199,7 +199,15 @@ do_save () {
 	dbg "new_tree=$new_tree"
 
 	if git diff-tree --exit-code --quiet $new_tree $wip_parent ; then
-		report_soft_error "no changes"
+            # See if all changes are commited but a wip hasn't happened yet
+	    local base=$(git merge-base $wip_last $work_last)
+            if [ "$base" != "$work_last" ]; then
+	        git update-ref -m "git-wip: $msg1" $wip_branch $work_last $wip_last
+                dbg "SUCCESS BY MERGE"
+                exit 0
+            else
+	        report_soft_error "no changes"
+            fi
 	fi
 
 	dbg "... has changes"
